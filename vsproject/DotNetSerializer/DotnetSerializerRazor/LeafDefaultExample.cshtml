@@ -1,0 +1,78 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Reference Example";
+    
+}
+
+@section featured {
+<section class="featured">
+    <div class="content-wrapper">
+        <hgroup class="title">
+            <h1>@Page.Title.</h1>
+        </hgroup>
+    </div>
+   
+    <div>
+@{          
+    global_asax.ManyDefaultsTestData md = new global_asax.ManyDefaultsTestData();
+    global_asax.Object2Json.OmitDefaultLeafValuesInJs = true;
+    global_asax.Object2Json.IndentSize = 2;
+    var json = Html.Raw( global_asax.Object2Json.toJson(md));
+               
+}
+        <p></p>
+        @RenderPage("Globalinit.cshtml")
+
+<h2>create test object on server:</h2>
+        <pre>
+     global_asax.ManyDefaultsTestData md = new global_asax.ManyDefaultsTestData();
+</pre>
+<h2>create json without default values on server:</h2>
+            <pre>
+            global_asax.Object2Json.OmitDefaultLeafValuesInJs = true;    
+            var json = Html.Raw( global_asax.Object2Json.toJson(root));
+</pre>
+        <h2>json without default leaf values:</h2>
+<pre>
+    @json
+</pre>
+
+        <h2>client side test</h2>
+        <script>
+            var root = @json;
+            _resolveLeafDefaults(root);
+// resolve all defaulted values
+//            resolveRefs(root);
+        </script>
+<pre>
+    var root =  @json;
+    //resolve all the default values in the test object
+    _resolveLeafDefaults(root);    
+    // check with javascript: document.write(root.stringValuesArr[2].str2)
+    //root.subo3.stringVal===<script>document.write(root.stringValuesArr[2].str2)</script>          
+</pre>
+
+
+<h2>create json with defaults on server:</h2>
+@{
+    global_asax.Object2Json.OmitDefaultLeafValuesInJs = false;    
+    string jsonWithDefaults = global_asax.Object2Json.toJson(md);
+}
+
+<pre>
+    global_asax.Object2Json.OmitDefaultLeafValuesInJs = false;    
+    string jsonWithDefaults = global_asax.Object2Json.toJson(root);
+</pre>
+<h2>json without reference support received by client:</h2>
+with defaults everything is sent:
+<pre>
+           @jsonWithDefaults  
+</pre>
+
+
+
+
+    </div>
+
+</section>
+}

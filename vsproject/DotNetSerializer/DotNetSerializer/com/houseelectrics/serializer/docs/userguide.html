@@ -1,0 +1,580 @@
+﻿<html>
+<head>
+    <title>userguide</title>
+    <link rel="stylesheet" href="standardn.css" type="text/css">
+</head>
+<body bgcolor="black">
+
+<div id="content">
+    <table cellpadding="20">
+        <tr>
+            <td bgcolor="#eeeeee">
+                <h1> Json Serializer User Guide </h1>
+
+                <h2>Introduction</h2>
+
+                <p>
+                    This is an implementation of a json serializer - created to show the benefits of adding
+                    reference support and default support to json.
+                    This project is in part a response to situations where lack of reference support has slowed rich javascript GUI to a standstill.
+                </p>
+                <p>
+                    Reference support and default support enable duplications to be removed from json thus reducing network usage and page size.<br />
+                    Reference support allows transmitted objects to be more like their c# counterparts.<br />
+                </p>
+                <p>
+                    Default support avoids the necessity for transmitting default values.<br />
+                    This serialiser supports defaulting at "leaf" level i.e. primitive properties and fields.<br />
+                    Defaulting at an object level is intrinsic to reference support so isnt addressed specifically -
+                    if a default value evaluates to an object,  reference support will prevent its repetition<br />
+
+                </p>
+
+                <p>
+                    This serializer is open for customization and these examples are included:<br />
+                    <ul>
+                        <li>Field or property serialization</li>
+                        <li>json deserialization to .net objects - including supporting for references, defaults</li>
+                        <li>Support for ms <b>System.Runtime.Serialization.DataMemberAttribute</b></li>
+                        <li>Attribute based security filtering</li>
+                    </ul>
+                </p>
+                <p>
+                    This low level event based json explorer is included.
+                    <ul>
+                        <li><b>JSONExplorerImpl</b></li>
+                    </ul>
+                </p>
+
+
+                <h2>Reference Support</h2>
+                <h3>Reference Support Example</h3>
+                This example is in NUnit test TestToJson.cs.testUseReferencesSimple and appears on the <a href="testTable.html">automated client side compatibility test page</a>.
+                <br />
+                On first appearance objects are given an id value (_id_=.. by default).
+                <br />
+                Repeated Objects are written as a reference (_ref_=.. by default).
+                <br />
+                e.g. this c#:
+<pre>
+        class ObjectWithRefs
+        {
+            public PotentiallyHugeSubObject subo1;
+            public PotentiallyHugeSubObject subo2;
+            public PotentiallyHugeSubObject subo3;
+        };
+        class PotentiallyHugeSubObject
+        {
+            public String stringVal;
+            public int intVal;
+        };
+            ObjectWithRefs root = new ObjectWithRefs();
+            root.subo1 = new PotentiallyHugeSubObject();
+            root.subo1.stringVal="12345678901234567890123456789";
+            root.subo1.intVal =4321;
+            root.subo2=root.subo1;
+            root.subo3=root.subo2;
+            Object2Json o2j = new Object2Json();
+            o2j.NodeExpander = new FieldReflectionNodeExpander();
+            
+            o2j.UseReferences = true;
+            string json = o2j.toJson(root);
+ 
+</pre>
+                results in json:
+<pre>
+ "{_id_:1, subo1:{_id_:2, stringVal:'12345678901234567890123456789', intVal:4321}, subo2:{_ref_:2}, subo3:{_ref_:2}}";<br />
+</pre>
+                without reference support the objects are repeated unneccesarily. This c#:
+<pre>
+            o2j.UseReferences = false;
+            string jsonWithoutReferenceSupport = o2j.toJson(root);
+</pre>
+                results in this json:
+<pre>
+{subo1:{stringVal:'12345678901234567890123456789', intVal:4321},
+ subo2:{stringVal:'12345678901234567890123456789', intVal:4321}, subo3:{stringVal:'12345678901234567890123456789', intVal:4321
+}}
+writing test to testtemp\TestToJson.testUseReferencesSimple.html
+</pre>
+
+                because reference support isn't in standard json a resolving function is required to deserialise, in javascript:
+<pre>
+    var root=resolveRefs({_id_:1, subo1:{_id_:2, stringVal:'123456', intVal:4321}, subo2:{_ref_:2}, subo3:{_ref_:2}});
+</pre>
+
+                <h2>Default Value Leaf Support</h2>
+                Default leaf support allows json to be sent without default values.
+                This is achieved by establishing a LeafDefaultSet mapping from type to default values for properties. Object2Json can refer to this default set to determine which values to include.
+                This LeafDefaultSet is serialised to Json for use in the javascript function_resolveDefaults to "fill in" unspecified fields.
+                defaulting can be further customized by specifying delegate Object2Json.isDefaultLeafValue.
+                <h3>Default Value Leaf Example</h3>
+                This example is in junit TestToJson.cs.demoDefaultingForUserguide and appears on the <a href="testTable.html">automated client side compatibility test page</a>
+                <br />
+                This c#:
+<pre>
+  // Test Data
+  class ManyDefaultsTestData
+        {
+            internal int i1 = 123456789;
+            internal int i2 = 23456789;
+            public int i4 = 432102345;
+            public class StringValues
+            { 
+                public string str1="abcdefghijk";
+                internal string str2="bcdefghijklmno";
+                internal string str3=null;
+                string aReallyReallyReallyLongName="John Malcom Eldritch Ebeneezer Ozwald Smith";                
+            }
+            internal StringValues stringValues = new StringValues();
+            internal StringValues[] stringValuesArr = { new StringValues(), new StringValues(), new StringValues() };
+        }
+            // create the test data
+            ManyDefaultsTestData md = new ManyDefaultsTestData();
+            
+            // create an aliaser to create identifiers for types
+            // must emit valid js property name distinct for each class 
+            // typically a number is used to reduce size
+            TypeAliaser aliaser = TypeAliaserUtils.createNumericTypeNameAliaser();
+            
+            //focus on serializing fields
+            NodeExpander nodeExpander = new FieldReflectionNodeExpander();
+            // find the defaults - this is a one off
+            // only necessary once per schemachange
+            DefaultFinder df = new DefaultFinder();            
+            // discover the relevant defaults - this method just searches through the type structure
+            LeafDefaultSet lds = df.getDefaultsForAllLinkedObjects(md, nodeExpander);
+            // create a dictionary of default values - this is a one off per schemachange
+            Dictionary&lt;string, Defaults4Class> defaultValues = lds.getAlias2Defaults(aliaser);
+            Object2Json o2J = new Object2Json();
+            o2J.TypeAliaser = aliaser;
+            o2J.NodeExpander = nodeExpander;
+            // make the format prettier
+            o2J.IndentSize = 2;
+            String defaultValuesJson = o2J.toJson(defaultValues);
+            // create javascript representing the dictionary of defaults
+            // serialise without defaults
+            o2J.OmitDefaultLeafValuesInJs = true;
+            o2J.LeafDefaultSet = lds;
+            o2J.OmitMarkAsArrayFunction = false;
+            String withoutDefaultsLeafValuesJS = o2J.toJson(md);
+</pre>
+                results in json:
+<pre>
+ {_id_:1,   {_t_:'_0', stringValues:
+    {_t_:'_1'}
+  , stringValuesArr:
+    _a_([
+      {_t_:'_1'}
+    ,
+      {_t_:'_1'}
+    ,
+      {_t_:'_1'}
+    ])
+  }
+</pre>
+                without default support default values are sent unneccesarily:
+<pre>
+      {_t_:'_0', i1:123456789, i2:23456789, i4:432102345, stringValues:
+    {_t_:'_1', str1:'abcdefghijk', str2:'bcdefghijklmno', str3:null, aReallyReallyReallyLongName:'John Malcom Eldritch Ebeneezer Ozwald Smith'}
+  , stringValuesArr:
+    _a_([
+      {_t_:'_1', str1:'abcdefghijk', str2:'bcdefghijklmno', str3:null, aReallyReallyReallyLongName:'John Malcom Eldritch Ebeneezer Ozwald Smith'}
+    ,
+      {_t_:'_1', str1:'abcdefghijk', str2:'bcdefghijklmno', str3:null, aReallyReallyReallyLongName:'John Malcom Eldritch Ebeneezer Ozwald Smith'}
+    ,
+      {_t_:'_1', str1:'abcdefghijk', str2:'bcdefghijklmno', str3:null, aReallyReallyReallyLongName:'John Malcom Eldritch Ebeneezer Ozwald Smith'}
+    ])
+  }
+</pre>
+                The javascript also requires a reference to the defaults set:
+<pre>
+    var _typeAlias2LeafDefaults_ = 
+  {_0:
+    {fullClassName:'com.houseelectrics.serializer.test.TestToJson+ManyDefaultsTestData', propertyName2DefaultValue:
+      {i1:123456789, i2:23456789, i4:432102345}
+    }
+  , _1:
+    {fullClassName:'com.houseelectrics.serializer.test.TestToJson+ManyDefaultsTestData+StringValues', propertyName2DefaultValue:
+      {str1:'abcdefghijk', str2:'bcdefghijklmno', str3:null, aReallyReallyReallyLongName:'John Malcom Eldritch Ebeneezer Ozwald Smith'}
+    }
+  }
+;
+</pre>
+                and also the reference resolving function: _resolveLeafDefaults,  needed because default support isn't in standard json a resolving function is required to deserialise, in javascript:
+<pre>
+       function _resolveLeafDefaults  { ...... }
+</pre>
+                Typically the default set and leaf resolver function would be provided on the same page.
+
+                <h2>Default Value Nested Object Support</h2>
+                This is not supported directly, however, switching on reference support will avoid repetition of objects.
+
+                <h2>Collection Support</h2>
+                Lists and arrays are mapped to javascript arrays. Dictionaries are mapped to javascript objects.
+                <h3>Indexed Collection Support Example </h3>
+                This c# (located in TestToJson.cs.testDemoIndexedPropertiesForUserguide) and appears on the <a href="testTable.html">automated client side compatibility test page</a>.
+
+<pre>
+        public class IndexedTestContainer
+        {
+            internal string[] strings;
+            internal List&ltint> ints;
+        }
+        IndexedTestContainer testData = new IndexedTestContainer();
+        testData.strings = new string[] { "eee", "ddd", "ccc", "bbb" };
+        testData.ints = new List&lt;int>(new int[] {6,5,4,3,2,1} );
+        Object2Json o2J = new Object2Json();
+        o2J.NodeExpander = new FieldReflectionNodeExpander();
+        // make the format prettier
+        o2J.IndentSize = 2;
+        string json = o2J.toJson(testData);
+</pre>
+
+                Gives this json:
+<pre>
+      {strings:
+    ['eee', 'ddd', 'ccc', 'bbb']
+  , ints:
+    [6, 5, 4, 3, 2, 1]
+  }
+</pre>
+
+                <h3>IDictionary Collection Support Example </h3>
+                This c# (located in TestToJson.cs.testDemoHashedPropertiesForUserguide) and appears on the <a href="testTable.html">automated client side compatibility test page</a>:
+<pre>
+        public class HashedTestContainer
+        {
+            public IDictionary&lt;string, int> Name2Number { get; set; }
+            public IDictionary&lt;int, string> Number2Name { get; set; }            
+        }
+        HashedTestContainer testData = new HashedTestContainer();
+        testData.Name2Number = new Dictionary&lt;string, int>();
+        testData.Name2Number["one"] = 1;
+        testData.Name2Number["two"] = 2;
+        testData.Name2Number["three"] = 3;
+        testData.Name2Number["four"] = 4;
+        testData.Number2Name = new Dictionary&lt;int, string>();
+        testData.Number2Name[1]="one";
+        testData.Number2Name[2]="two";
+        testData.Number2Name[3]="three";
+        testData.Number2Name[4]="four";
+        Object2Json o2J = new Object2Json();
+        o2J.NodeExpander = new PropertyReflectionNodeExpander();
+        // make the format prettier
+        o2J.IndentSize = 2;
+        string json = o2J.toJson(testData);
+</pre>
+                is mapped to this json:
+<pre>
+      {Name2Number:
+    {one:1, two:2, three:3, four:4}
+  , Number2Name:
+    {1:'one', 2:'two', 3:'three', 4:'four'}
+  }
+</pre>
+
+                <h2>Serializer Test Organisation</h2>
+                Server side NUnit tests are in package com.houseelectrics.serializer.test These can be run directly with MainTest.cs or via NUnit console.
+                Running <b>MainTest.cs</b> has the side effect of creating <a href="testTable.html">automated client side compatibility test page</a>.
+                <h3>Browser Compatibility</h3>
+                To check a particular browser version works confirm that each test on the <a href="testTable.html">automated client side compatibility test page</a>  has a tick <img src="tick.png" />.
+                <p>The major browsers have been tested with <a href="http://browsershots.org/">browsershots.org</a> .</p>
+
+                <h3> standard serialization tests</h3>
+                <p>These are located in class com.houseelectrics.serializer.test.TestToJson</p>
+                <p>
+                    the simplest way to add an automated test is to follow the style below.
+                    The call to validateJSON makes sure these take place:
+                    <ul>
+                        <li>the JSON is validated using an internal script engine running an assertion for each test expression</li>
+                        <li>a test for the JSON appears on the <a href="testTable.html">automated client side compatibility test page</a> </li>
+                        <li> the NUnit description field is picked up</li>
+                    </ul>
+
+                    <pre>
+                     [Test(Description="my new serialization test")]
+                     public void myJsonTest
+                        {
+                        MyTestDataClass testData = new MyTestDataClass();
+                       .... set up test data
+                      
+                       //create the serializer
+                       Object2Json o2J = new Object2Json();
+                       .. set up an appropriate node expander - focus on fields in this case
+                       o2J.NodeExpander = new FieldReflectionNodeExpander();
+                       // make the format prettier
+                       o2J.IndentSize = 2;
+                       // create the json
+                       string json = o2J.toJson(testData);
+                       string[] expressions = { "expression1", "expression2",......  };
+                       object[] expectedValues = {testData.expression1, testData.expression2, ... };
+                       validateJSON(json, expressions, expectedValues, "myJsonTest");
+                      }
+                </pre>
+                </p>
+
+
+                <h2>json deserialization to .net objects - including supporting for references, defaults</h2>
+                <h3>Deserialization Test Organization</h3>
+                Deserialization tests are located in com.houseelectrics.serializer.test.TestFromJson
+                <h3>Deserialization Basic Examples</h3>
+                This is from TestFromJson.testFields4UserGuide - note use of type specifier in json:
+                <pre>
+            Json2Object j2O = new Json2Object();
+            string json = "{@class:com.houseelectrics.serializer.test.TestFromJson+SimpleTestObject stringFieldA:\"abcd\"  intFieldC:9876 }";
+            SimpleTestObject result = (SimpleTestObject)j2O.toObject(json);
+            Assert.AreEqual(result.stringFieldA, "abcd", "matching string value");
+            Assert.AreEqual(result.intFieldC, 9876, "matching int value");
+</pre>
+                This is from TestFromJson.testFields4UserGuideTypeHint - note use of type hint:
+
+                <pre>
+            Json2Object j2O = new Json2Object();
+            string json = "{stringFieldA:\"abcd\"  intFieldC:9876 }";
+            SimpleTestObject result = (SimpleTestObject)j2O.toObject(json, typeof(SimpleTestObject));
+            Assert.AreEqual(result.stringFieldA, "abcd", "matching string value");
+            Assert.AreEqual(result.intFieldC, 9876, "matching int value");
+                </pre>
+
+                <h2>Support for ms <b>System.Runtime.Serialization.DataMemberAttribute</b></h2>
+                These DataMemberAttribute properties are supported:
+                <ul>
+                    <li>Name</li>
+                    <li>Order</li>
+                    <li>IsRequired</li>
+                    <li>EmitDefaultValue</li>
+                </ul>
+                Tests are in com.houseelectrics.serializer.test.datacontract.DataContractSupportTest -
+                they cross check output against output of ms built in serializer DataContractJsonSerializer.
+                <h3>DataMemberAttribute Name test </h3>
+                This is located in
+                DataContract Test DataContractSupportTest.cs.testDataMemberSimple
+<pre>
+//test data class    
+internal class Person
+    {
+        [DataMember]
+        internal string name;
+        [DataMember]
+        internal int age;
+        [DataMember(Name="salutation")]
+        internal string title;
+        //this warning relates to unused fields - not relevant in this case
+        //non DataMember field - present to test it is  not serialized
+        internal string nonDataContractField;
+    }
+    Object2Json o2j = new Object2Json();
+    o2j.NodeExpander = new DataContractFieldNodeExpander();
+    string strJson =  o2j.toJson(p);
+</pre>
+                results in json:
+<pre>
+    {name:'John', age:42, salutation:'Mr'}
+</pre>
+
+                <h3>DataMemberAttribute Order test </h3>
+                This is located in
+                DataContract Test DataContractSupportTest.cs.testOrdering
+<pre>
+//test data class    
+internal class OrderingTestObject
+    {
+        [DataMember(Order=4)]
+        public string four;
+        [DataMember(Order = 3)]
+        public string three;
+        [DataMember(Order = 1)]
+        public string one;
+        [DataMember(Order = 2, IsRequired=true)]
+        public string two;
+    }
+    // create test data
+    OrderingTestObject orderingTestObject = new OrderingTestObject();
+    orderingTestObject.four = "4";
+    orderingTestObject.three = "3";
+    orderingTestObject.one = "1";
+    orderingTestObject.two = "2";
+    Object2Json o2j = new Object2Json();
+    o2j.NodeExpander = new DataContractFieldNodeExpander();
+    string json = o2j.toJson(orderingTestObject);
+</pre>
+                results in json with fields in order specified:
+<pre>
+        {one:'1', two:'2', three:'3', four:'4'}
+</pre>
+
+                <h3>DataMemberAttribute IsRequired example </h3>
+                This is located in
+                DataContract Test DataContractSupportTest.cs.testMandatory
+<pre>
+    json = "{ one:2 }";
+    Object2Json o2j = new Object2Json();
+    o2j.NodeExpander = new DataContractFieldNodeExpander();
+    string json = o2j.toJson(orderingTestObject);
+</pre>
+                results in a <b>SerialisationException</b> because OrderingTestObject.one is marked with DataMember(IsRequired=true)
+
+                <h3>DataMemberAttribute EmitDefaultValue example </h3>
+                This is located in
+                DataContract Test DataContractSupportTest.cs.testEmitDefaultForUserguide
+<pre>
+//test data class - all fields marked to only emit non default values
+        internal class EmitDefaultsUserGuideExample
+        {
+            [DataMember(EmitDefaultValue = false, Order = 0)]
+            public string zero = "0";
+            [DataMember(EmitDefaultValue = false, Order = 1)]
+            public string one = "1";
+            [DataMember(EmitDefaultValue = false, Order = 2)]
+            public int two = 2;
+            [DataMember(EmitDefaultValue = false, Order = 3)]
+            public int three = 3;            
+        }
+            //create test data
+            EmitDefaultsUserGuideExample o = new EmitDefaultsUserGuideExample();
+            o.zero = null;
+            o.one = "1one1";
+            o.two = 0;
+            o.three = 3;
+            //setup serializer
+            Object2Json o2j = new Object2Json();
+            o2j.NodeExpander = new DataContractFieldNodeExpander();
+            o2j.isDefaultLeafValue = DataContractDefaultUtil.isDefaultLeafValue;
+            o2j.OmitDefaultLeafValuesInJs = true;
+            //create json
+            string json = o2j.toJson(o);
+</pre>
+                results in {one:'1one1', three:3}
+
+                <h2>Attribute based security filtering</h2>                
+                Permission requirements are specified with attributes and checked with the injected security function.
+                There is an option to throw an exception if a required permission is not present.
+                These examples and more are in com.houseelectrics.serializer.test.security.SecurityTest
+                <h3>Permission Example - no exception thrown</h3>
+                This code is in SecurityTest.cs.testFieldLeafDenialNoExceptionForUserGuide.  
+                In this case non-premissioned properties are skipped. 
+<pre>
+                public class LogonDetailsUserguideTestData
+                {
+                [PermissionRequirementAttribute("ViewPasswords")]
+                public string password;
+                [PermissionRequirementAttribute("ViewUsernames")]
+                public string username;
+                }
+....
+                //create sensitive data
+                LogonDetailsUserguideTestData sensitiveData = new LogonDetailsUserguideTestData();
+                sensitiveData.password = "secret123";
+                sensitiveData.username = "Andrew Eldritch";
+
+                Object2Json o2j = new Object2Json();
+                o2j.NodeExpander = new FieldReflectionNodeExpander();
+                // inject a simple security check
+                string[] currentPermissions=null;
+                //create simple permission check for test purposes
+                Func&lt;string, bool>
+                permissionCheck = (permission) => { return currentPermissions.Contains(permission); };
+                bool throwExceptionOnPermissionDenial = false;
+                o2j.injectPermissionFilter(permissionCheck, throwExceptionOnPermissionDenial);
+                currentPermissions = new string[] { "ViewUsernames" };
+                string json = o2j.toJson(sensitiveData);
+</pre> results in json without the denied password data:
+                <pre>
+                {username:'Andrew Eldritch'}
+                </pre>
+       if the password data is permissioned the data is there:
+                <pre>
+                currentPermissions = new string[] { "ViewUsernames", "ViewPasswords" };
+                json = o2j.toJson(sensitiveData);
+</pre>
+<pre>
+                {password:'secret123', username:'Andrew Eldritch'}                    
+</pre>
+                <h3>Permission Example - Exception thrown</h3>
+                This code is in SecurityTest.cs.testFieldLeafDenialWithExceptionForUserGuide.
+                In this case non permissioned properties cause an exception.
+<pre>
+           //create test data
+           LogonDetailsUserguideTestData sensitiveData = new LogonDetailsUserguideTestData();
+           sensitiveData.password = "secret432";
+           sensitiveData.username = "Tyrion Lannister";
+
+           Object2Json o2j = new Object2Json();
+           o2j.NodeExpander = new FieldReflectionNodeExpander();
+           // inject a simple security check
+           string[] currentPermissions=null;
+           Func&lt;string, bool> permissionCheck = (permission) => { return currentPermissions.Contains(permission); };
+           bool throwExceptionOnPermissionDenial = true;
+           o2j.injectPermissionFilter(permissionCheck, throwExceptionOnPermissionDenial);
+           currentPermissions = new string[] { "ViewUsernames" };
+           string json = o2j.toJson(sensitiveData);
+</pre>
+    results in a  <b>System.Security.SecurityException</b>:
+<pre>
+     cannot access property com.houseelectrics.serializer.test.security.SecurityTest+LogonDetailsUserguideTestData.password 
+             without permisson ViewPasswords
+</pre>
+                <h2>Design</h2>
+                <h3>Dependancies</h3>
+                These are required for testing:
+                <ul>
+                <li><a href="http://www.nunit.org/">nunit.framework</a></li>
+                <li><a href="http://www.ayende.com/wiki/Rhino+Mocks.ashx">Rhino.Mocks</a></li>
+                </ul>
+                <h3>Explorer / NodeExpander - core Serialization Pattern</h3>
+                <br />
+                NodeExpander s determine what related items are identified for an object.
+                Explorers determine the route taken.   Both are Extension Points. Both provide callbacks ????
+                <br />
+                com.houseelectrics.serializer.ExplorerImpl
+                This is the current set of node expanders:
+                <ul>
+                <li><b>FieldReflectionNodeExpander</b> - designates fields for serialization</li>
+                <li><b>PropertyReflectionNodeExpander</b> - designates properties for serialization</li>
+                <li><b>DataContractFieldNodeExpander</b> - designates members with ms DataContractAttributes</li>
+                </ul>
+                This is the current set of Explorers:
+                <ul>                    
+                    <li><b>com.houseelectrics.serializer.ObjectExplorerImpl</b> explores object graphs in 1 pass based on a supplied NodeExpander </li>
+                    <li><b>com.houseelectrics.serializer.security.PermissionFilterExplorer</b> overlays permission checks on another Explorer </li>
+                </ul>
+                <h3>
+                    Serialization design summary
+                </h3>
+                    Object2Json . . . . .
+                <h3>
+                    Deserialization design summary
+                </h3>
+                <b>JSONExplorerImpl</b> provides a low level event based json analyser<br />
+                <b>Object2JSON</b> consumes <b>JSONExplorerImpl</b> events 
+                     <br />
+                    Extension Points:<br />
+                <b>com.houseelectrics.serializer.DeserializationListener</b>
+
+
+                <h2>Support - Appeal for Comments</h2>
+                email support:
+                <a href="mailto:codesupport@houseelectrics.com?Subject=Help!">codesupport@houseelectrics.com</a>
+                All queries and suggestions are welcome especially failing unit tests e.g.
+<pre>
+Dear houseelectrics why doesn't this work ?
+class MyClass
+{
+.......
+}
+      Object2Json o2J = new Object2Json();
+      o2J.NodeExpander = new PropertyReflectionNodeExpander();
+      object testData = new MyClass();
+      string json = o2J.toJson(testData);
+      Assert.assertTrue( .... something about json ....);
+</pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+ 
+    
+</html>

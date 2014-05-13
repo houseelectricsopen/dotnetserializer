@@ -1,0 +1,111 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Reference Example";
+    
+}
+
+@section featured {
+<section class="featured">
+    <div class="content-wrapper">
+        <hgroup class="title">
+            <h1>@Page.Title.</h1>
+        </hgroup>
+    </div>
+   
+    <div>
+@functions{
+   class ObjectWithRefs
+        {
+            public PotentiallyHugeSubObject subo1;
+            public PotentiallyHugeSubObject subo2;
+            public PotentiallyHugeSubObject subo3;
+        };
+        class PotentiallyHugeSubObject
+        {
+            public String stringVal;
+            public int intVal;
+        };
+        }
+@{          ObjectWithRefs root = new ObjectWithRefs();
+            root.subo1 = new PotentiallyHugeSubObject();
+            root.subo1.stringVal="012345678909876543210";
+            root.subo1.intVal =4321;
+            root.subo2=root.subo1;
+            root.subo3=root.subo2;
+            
+            global_asax.Object2Json.UseReferences = true;
+            var json = Html.Raw( global_asax.Object2Json.toJson(root));
+               
+}
+        <p></p>
+        @RenderPage("Globalinit.cshtml")
+
+<h2>create test object on server:</h2>
+        <pre>
+       class ObjectWithRefs
+        {
+            public PotentiallyHugeSubObject subo1;
+            public PotentiallyHugeSubObject subo2;
+            public PotentiallyHugeSubObject subo3;
+        };
+        class PotentiallyHugeSubObject
+        {
+            public String stringVal;
+            public int intVal;
+        };
+         
+            ObjectWithRefs root = new ObjectWithRefs();
+            root.subo1 = new PotentiallyHugeSubObject();
+            root.subo1.stringVal="123456";
+            root.subo1.intVal =4321;
+            root.subo2=root.subo1;
+            root.subo3=root.subo2;
+</pre>
+<h2>create json on server:</h2>
+            <pre>
+            global_asax.Object2Json.UseReferences = true;
+            var json = Html.Raw( global_asax.Object2Json.toJson(root));
+</pre>
+        <h2>json with reference support received by client:</h2>
+<pre>
+    @json
+</pre>
+
+        <h2>client side test</h2>
+        <script>
+            var root = @json;
+//resolve all the references in the test object
+            resolveRefs(root);
+        </script>
+<pre>
+    var root =  @json;
+    //resolve all the references in the test object
+    resolveRefs(root);
+    // check with javascript: document.write(root.subo3.stringVal)
+    root.subo3.stringVal===<script>document.write(root.subo3.stringVal)</script>          
+</pre>
+
+
+<h2>create json without references on the server:</h2>
+@{
+    global_asax.Object2Json.UseReferences = false;
+    string jsonWithoutRefs = global_asax.Object2Json.toJson(root);
+}
+
+<pre>
+    global_asax.Object2Json.UseReferences = false;
+    string jsonWithoutRefs = global_asax.Object2Json.toJson(root);
+</pre>
+<h2>json without reference support received by client:</h2>
+without reference support the json contains duplicates:
+<pre>
+           @jsonWithoutRefs  
+</pre>
+
+
+
+
+    </div>
+
+</section>
+}

@@ -1,0 +1,14 @@
+﻿<h2> global initialisation from global_asax.cs</h2>
+<pre>
+    public static Object2Json Object2Json { get; private set; }
+    
+    void Application_Start(object sender, EventArgs e) 
+    {
+        // create global serialiser here
+        // set up global defaults
+        Object2Json = new Object2Json();
+        Object2Json.UseReferences = true;
+        Object2Json.LeafDefaultSet = null;
+        Object2Json.NodeExpander = new FieldReflectionNodeExpander();
+    }
+            </pre>
