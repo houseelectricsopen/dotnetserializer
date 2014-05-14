@@ -7,28 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetSerializer", "DotNetS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetSerializerTest", "DotNetSerializerTest\DotNetSerializerTest.csproj", "{7663C4D0-80B4-4AE6-9028-1D09F3F1FC5C}"
 EndProject
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "DotnetSerializerRazor", "http://localhost:57171", "{8A110134-110A-42B3-9A22-2B35C642746E}"
-	ProjectSection(WebsiteProperties) = preProject
-		UseIISExpress = "true"
-		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.5"
-		ProjectReferences = "{a5c3a4dd-0aab-4847-83a1-f02749825efd}|DotNetSerializer.dll;"
-		Debug.AspNetCompiler.VirtualPath = "/localhost_57171"
-		Debug.AspNetCompiler.PhysicalPath = "DotnetSerializerRazor\"
-		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_57171\"
-		Debug.AspNetCompiler.Updateable = "true"
-		Debug.AspNetCompiler.ForceOverwrite = "true"
-		Debug.AspNetCompiler.FixedNames = "false"
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.VirtualPath = "/localhost_57171"
-		Release.AspNetCompiler.PhysicalPath = "DotnetSerializerRazor\"
-		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_57171\"
-		Release.AspNetCompiler.Updateable = "true"
-		Release.AspNetCompiler.ForceOverwrite = "true"
-		Release.AspNetCompiler.FixedNames = "false"
-		Release.AspNetCompiler.Debug = "False"
-		SlnRelativePath = "DotnetSerializerRazor\"
-		DefaultWebSiteLanguage = "Visual C#"
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetSerializerMVC5", "DotnetSerializerMVC5\DotnetSerializerMVC5.csproj", "{9DD8742A-F81F-4E87-AA46-0A2BE962972B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,10 +23,10 @@ Global
 		{7663C4D0-80B4-4AE6-9028-1D09F3F1FC5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7663C4D0-80B4-4AE6-9028-1D09F3F1FC5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7663C4D0-80B4-4AE6-9028-1D09F3F1FC5C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8A110134-110A-42B3-9A22-2B35C642746E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A110134-110A-42B3-9A22-2B35C642746E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8A110134-110A-42B3-9A22-2B35C642746E}.Release|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A110134-110A-42B3-9A22-2B35C642746E}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{9DD8742A-F81F-4E87-AA46-0A2BE962972B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DD8742A-F81F-4E87-AA46-0A2BE962972B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DD8742A-F81F-4E87-AA46-0A2BE962972B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DD8742A-F81F-4E87-AA46-0A2BE962972B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
