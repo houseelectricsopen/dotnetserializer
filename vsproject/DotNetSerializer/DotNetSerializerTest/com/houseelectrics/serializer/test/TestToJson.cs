@@ -40,6 +40,23 @@ namespace com.houseelectrics.serializer.test
             validateJSON(json, expressions, expectedValues, "testDemoIndexedPropertiesForUserguide");
         }
 
+        [Test(Description = "properties demo for userguide")]
+        public void testIndexedWithNull()
+        {
+            IndexedTestContainer testData = new IndexedTestContainer();
+            testData.strings = new string[] { null, "ddd", "ccc", null };
+            Object2Json o2J = new Object2Json();
+            o2J.NodeExpander = new FieldReflectionNodeExpander();
+            // make the format prettier
+            o2J.IndentSize = 2;
+            string json = o2J.toJson(testData);
+            System.Console.WriteLine("json=" + json);
+            string[] expressions = { "strings[0]", "strings[1]", "strings[2]", "strings[3]" };
+            object[] expectedValues = { testData.strings[0], testData.strings[1], testData.strings[2], testData.strings[3] };
+            validateJSON(json, expressions, expectedValues, "testIndexedWithNull");
+        }
+
+
         public class HashedTestContainer
         {
             public IDictionary<string, int> Name2Number { get; set; }
@@ -88,6 +105,7 @@ namespace com.houseelectrics.serializer.test
             String json = o2J.toJson(testData);
             validateJSON(json, expressions, expectedValues, "testToJsonLeafTypesViaProperties");
         }
+
 
         [Test(Description = "try different field types")]
         public void testToJsonLeafTypesViaFields()

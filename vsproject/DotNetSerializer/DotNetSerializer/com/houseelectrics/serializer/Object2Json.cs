@@ -10,11 +10,19 @@ using ObjectIDGenerator = System.Runtime.Serialization.ObjectIDGenerator;
 //search for ^ reg ex- gives 1776 29 july 2013 of which 1026 test
 //search for ^ reg ex- gives 1082 14 june 2013 of which 657 test
 //search for ^ reg ex- gives 949 16 june 2013 of which 521 test, 428 serializer
+//TODO add unit test for AlwaysDoubleQuotePropertyNames
 
 namespace com.houseelectrics.serializer 
 {
     public class Object2Json
     {
+        private bool alwaysDoubleQuotePropertyNames = false;
+        public bool AlwaysDoubleQuotePropertyNames
+           {
+              get { return alwaysDoubleQuotePropertyNames; }
+              set { this.alwaysDoubleQuotePropertyNames = value; }
+           }
+
         private TypeAliaser typeAliaser=null;
         public TypeAliaser TypeAliaser { get { return typeAliaser; } set { typeAliaser = value; } }
 
@@ -71,12 +79,7 @@ namespace com.houseelectrics.serializer
             //  o2J.OmitMarkAsArrayFunction = false;
            **/
 
-            if (LeafDefaultSet != null && OmitDefaultLeafValuesInJs && OmitMarkAsArrayFunction)
-            {
-                throw new Exception( "Leaf defaulting requires Array marker for js code" );
-            }
-
-
+         
             StringWriter sw = new StringWriter();
             writeAsJson(o, sw, typeAliaser);
             sw.Flush();
@@ -89,9 +92,23 @@ namespace com.houseelectrics.serializer
 
         public Func<Explorer> ExplorerFactory { get { return explorerFactory; } set { explorerFactory = value; } }
 
+        private void writePropertyName(string propertyName, TextWriter writer)
+        {
+            bool escapeRequired = this.AlwaysDoubleQuotePropertyNames || (propertyName.IndexOf('.') >= 0);
+            if (escapeRequired) writer.Write('\"');
+            writer.Write(propertyName);
+            if (escapeRequired) writer.Write('\"');
+        }
+
         class ExploreStackFrame { public int propertyCount;}
         public void writeAsJson(Object o, TextWriter writer, TypeAliaser typeAliaser=null)
         {
+            if (LeafDefaultSet != null && OmitDefaultLeafValuesInJs && OmitMarkAsArrayFunction)
+            {
+                throw new Exception("Leaf defaulting requires Array marker for js code");
+            }
+
+
             ObjectIDGenerator idGenerator = null;
 
             if (UseReferences)
@@ -111,10 +128,7 @@ namespace com.houseelectrics.serializer
                 }
                 if (from != null && propertyName != null)
                 {
-                    bool escapeRequired = (propertyName.IndexOf('.') >= 0);
-                    if (escapeRequired) writer.Write('\'');
-                    writer.Write(propertyName);
-                    if (escapeRequired) writer.Write('\'');
+                    writePropertyName(propertyName, writer);
                     writer.Write(":");
                 }
                 ExploreStackFrame childFrame = new ExploreStackFrame();
@@ -196,7 +210,7 @@ namespace com.houseelectrics.serializer
                      currentFrame.propertyCount++;
                      if (propertyName!=null)
                      {
-                         writer.Write(propertyName);
+                         writePropertyName(propertyName, writer);
                          writer.Write(":");                     
                      }
                   writeLeafValue(writer, to, propertyName);
@@ -270,10 +284,14 @@ namespace com.houseelectrics.serializer
             }
             else if (to.GetType() == typeof(string) || to.GetType() == typeof(Char))
             {
-                writer.Write("'");
+                writer.Write("\"");
                 writer.Write(to.ToString());
-                writer.Write("'");
+                writer.Write("\"");
             }//todo simplify below
+            else if (to.GetType() == typeof(Byte))
+            {
+                writer.Write((Byte)to);
+            }
             else if (to.GetType() == typeof(Int16))
             {
                 writer.Write((Int16)to);
@@ -310,6 +328,7 @@ namespace com.houseelectrics.serializer
             {
                 writer.Write(((Boolean)to).CompareTo(true) == 0 ? "true" : "false");
             }
+
             else throw new Exception("not implemented writeLeafValue:" + to.GetType() + " " + propertyName);
 
 

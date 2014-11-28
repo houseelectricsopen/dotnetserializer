@@ -78,6 +78,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="com\houseelectrics\serializer\test\path\PathTest.cs" />
     <Compile Include="com\houseelectrics\serializer\test\AllPrimitiveLeafTypes.cs" />
     <Compile Include="com\houseelectrics\serializer\test\datacontract\DataContractSupportTest.cs" />
     <Compile Include="com\houseelectrics\serializer\test\JsonExplorationTest.cs" />

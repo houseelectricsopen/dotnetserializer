@@ -17,7 +17,7 @@ namespace com.houseelectrics.serializer.test
             public class SubSub
             {
                 string greeting = "hi";
-                public String Greeting { get { return greeting; } }
+                public String Greeting { set { greeting = value; } get { return greeting; } }
                 private int ageYears = 32;
                 public int AgeYears { get { return ageYears; } }
                 public double heightMetres = 1.23;

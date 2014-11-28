@@ -9,15 +9,20 @@ namespace com.houseelectrics.serializer
 {
     public class PropertyReflectionNodeExpander : NodeExpander
     {
+        private bool excludeReadOnlyProperties = false;
+        public bool ExcludeReadOnlyProperties { get { return excludeReadOnlyProperties; } set { this.excludeReadOnlyProperties = value; } }
         public int expand(object o, OnChildNode onChildNode)
         {
             PropertyInfo []pis= o.GetType().GetProperties();
+            int setAbleCount = 0;
             foreach (PropertyInfo pi in pis)
             {
+                if (ExcludeReadOnlyProperties && pi.GetSetMethod() == null) { continue; }
                 Object value = null;
                 try
                 {
                     value = pi.GetValue(o);
+                    setAbleCount++;
                 }
                 catch (Exception ex)
                 {
@@ -29,7 +34,7 @@ namespace com.houseelectrics.serializer
                 name = pi.Name;
                 onChildNode(o, name, value);
             }
-            return pis.Length;
+            return setAbleCount;
         }
     }
 }

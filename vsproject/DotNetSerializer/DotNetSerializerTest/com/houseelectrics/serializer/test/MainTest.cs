@@ -5,8 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DataContractSupportTest = com.houseelectrics.serializer.test.datacontract.DataContractSupportTest;
 using SecurityTest = com.houseelectrics.serializer.test.security.SecurityTest;
-
-
+using PathTest = com.houseelectrics.serializer.test.path.PathTest;
 namespace com.houseelectrics.serializer.test
 {
 
@@ -20,7 +19,10 @@ namespace com.houseelectrics.serializer.test
 
         public static void Main(string[] args)
         {
+            (new PathTest()).testPath();
             (new TestExplorer()).testExploration();
+            
+
             (new JSExecuteUtilTest()).testExtractValues();
             (new JSExecuteUtilTest()).test();
             (new JSExecuteUtilTest()).testFunctionUse();
@@ -30,6 +32,7 @@ namespace com.houseelectrics.serializer.test
 
             TestToJson toJsonTest = new TestToJson();
             toJsonTest.demoDefaultingForUserguide();
+            toJsonTest.testIndexedWithNull();
             toJsonTest.testDemoIndexedPropertiesForUserguide();
             toJsonTest.testDemoHashedPropertiesForUserguide();
             toJsonTest.testToJsonFields();

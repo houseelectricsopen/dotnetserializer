@@ -39,6 +39,6 @@ namespace com.houseelectrics.serializer.test
             Assert.AreEqual(true, foundhi, "expected to find greeting");
         }
 
-       
+
     }
 }

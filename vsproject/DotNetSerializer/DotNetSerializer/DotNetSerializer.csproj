@@ -60,8 +60,9 @@
     <Compile Include="com\houseelectrics\serializer\NodeExpander.cs" />
     <Compile Include="com\houseelectrics\serializer\Object2Json.cs" />
     <Compile Include="com\houseelectrics\serializer\Object2JsonJavascript.cs" />
+    <Compile Include="com\houseelectrics\serializer\path\PathUtil.cs" />
     <Compile Include="com\houseelectrics\serializer\PropertyReflectionNodeExpander.cs" />
-    <Compile Include="PermissionFilterExplorer.cs" />
+    <Compile Include="com\houseelectrics\serializer\security\PermissionFilterExplorer.cs" />
     <Compile Include="com\houseelectrics\serializer\security\PermissionRequirementAttribute.cs" />
     <Compile Include="com\houseelectrics\serializer\StringUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

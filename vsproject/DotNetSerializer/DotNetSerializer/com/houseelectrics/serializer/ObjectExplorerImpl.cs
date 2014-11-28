@@ -69,7 +69,7 @@ namespace com.houseelectrics.serializer
                      for  (int done=0;doExpand && en.MoveNext();done++)
                      {
                          Object oVal = en.Current;
-                         if (isLeaf(oVal, oVal.GetType()))
+                         if (isLeaf(oVal, oVal==null?null:oVal.GetType()))
                              leaf(to, null, oVal);
                          else
                          {
