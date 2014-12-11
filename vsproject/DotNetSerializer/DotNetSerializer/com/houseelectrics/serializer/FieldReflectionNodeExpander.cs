@@ -17,6 +17,13 @@ namespace com.houseelectrics.serializer
         public int expand(object o, OnChildNode listener)
         {
             if (o == null) { return 0; }
+            if (o.GetType() == (typeof(DateTime)))
+            {
+                Int64 ewokTime = NodeExpanderConstants.extractEpochTimeMillis((DateTime)o);
+                listener(o, NodeExpanderConstants.unixEpochTimeMillisFieldName, ewokTime);
+                return 1;
+            }
+
             Type theclass = o.GetType();
             FieldInfo[] fis = theclass.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Default);
             foreach (FieldInfo fi in fis)

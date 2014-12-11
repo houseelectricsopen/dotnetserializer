@@ -13,6 +13,16 @@ namespace com.houseelectrics.serializer
         public bool ExcludeReadOnlyProperties { get { return excludeReadOnlyProperties; } set { this.excludeReadOnlyProperties = value; } }
         public int expand(object o, OnChildNode onChildNode)
         {
+            //treat dates differently !
+            if (o.GetType() == (typeof(DateTime)))
+            {
+                if (o.GetType() == (typeof(DateTime)))
+                {
+                    Int64 ewokTime = NodeExpanderConstants.extractEpochTimeMillis((DateTime)o);
+                    onChildNode(o, NodeExpanderConstants.unixEpochTimeMillisPropertyName, ewokTime);
+                    return 1;
+                }
+            }
             PropertyInfo []pis= o.GetType().GetProperties();
             int setAbleCount = 0;
             foreach (PropertyInfo pi in pis)

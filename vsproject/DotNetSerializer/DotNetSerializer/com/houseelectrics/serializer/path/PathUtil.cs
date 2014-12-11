@@ -41,6 +41,7 @@ namespace com.houseelectrics.serializer.path
 {
     if (found) return false;
     InstancePathElement element;
+    InstancePathElement thepeek = currentPath.Count>0 ? currentPath.Peek() : null;
     bool parentIsIndexed = currentPath.Count > 0 && currentPath.Peek().IsIndexed;
     if (parentIsIndexed)
     {

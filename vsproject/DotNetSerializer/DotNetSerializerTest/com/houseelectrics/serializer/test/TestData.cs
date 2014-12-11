@@ -8,6 +8,9 @@ namespace com.houseelectrics.serializer.test
 {
     class TestData
     {
+        DateTime theDate = DateTime.Now;
+        public DateTime getTheDate() { return theDate; }
+        public DateTime TheDate { get { return theDate; } set { theDate = value; } }
         Sub sub = new Sub();
         public Sub TheSub { get { return sub; } }
         public class Sub

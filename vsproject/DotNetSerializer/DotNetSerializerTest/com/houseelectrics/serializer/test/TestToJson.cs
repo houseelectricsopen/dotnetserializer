@@ -128,8 +128,8 @@ namespace com.houseelectrics.serializer.test
         {
             NodeExpander nodeExpander = new FieldReflectionNodeExpander();
             TestData testData = new TestData();
-            String[] expressions = { "sub.subSub.greeting", "sub.subSub.ageYears", "sub.subSub.heightMetres" };
-            Object[] expectedValues = { testData.TheSub.TheSubSub.Greeting, testData.TheSub.TheSubSub.AgeYears, testData.TheSub.TheSubSub.HeightMetres };
+            String[] expressions = { "theDate." + NodeExpanderConstants.unixEpochTimeMillisFieldName, "sub.subSub.greeting", "sub.subSub.ageYears", "sub.subSub.heightMetres" };
+            Object[] expectedValues = { NodeExpanderConstants.extractEpochTimeMillis( testData.TheDate) , testData.TheSub.TheSubSub.Greeting, testData.TheSub.TheSubSub.AgeYears, testData.TheSub.TheSubSub.HeightMetres };
             Object2Json o2J = new Object2Json();
             o2J.NodeExpander = nodeExpander;
             o2J.IndentSize = 2;
