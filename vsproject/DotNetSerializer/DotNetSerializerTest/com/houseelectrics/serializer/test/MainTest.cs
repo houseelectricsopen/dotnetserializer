@@ -31,6 +31,7 @@ namespace com.houseelectrics.serializer.test
             (new TestReflectiveNodeExpander()).simpleExpandByProperty();
 
             TestToJson toJsonTest = new TestToJson();
+            
             toJsonTest.demoDefaultingForUserguide();
             toJsonTest.testIndexedWithNull();
             toJsonTest.testDemoIndexedPropertiesForUserguide();
@@ -46,6 +47,7 @@ namespace com.houseelectrics.serializer.test
             toJsonTest.testUseReferences();
             toJsonTest.testDefaulting();
             toJsonTest.testDefaultingWritingDefaultsBit();
+            toJsonTest.testEnumWrite();            
 
             JsonExplorationTest explorationTest = new JsonExplorationTest();
 
@@ -78,6 +80,7 @@ namespace com.houseelectrics.serializer.test
             fromJsonTest.testToJsonArray();
             fromJsonTest.testFromJsonHierarchy();
             fromJsonTest.testFromJsonHierarchyDeep();
+            fromJsonTest.testTypeInference();
 
             // todo make this work or remove
             // (new TestFromJson()).testMixedListField();

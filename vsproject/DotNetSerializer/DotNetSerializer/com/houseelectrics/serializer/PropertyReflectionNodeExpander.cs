@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace com.houseelectrics.serializer
 {
@@ -32,6 +29,10 @@ namespace com.houseelectrics.serializer
                 try
                 {
                     value = pi.GetValue(o);
+                    if (pi.PropertyType.IsEnum)
+                    {
+                        value = Enum.GetName(pi.PropertyType, value);
+                    }
                     setAbleCount++;
                 }
                 catch (Exception ex)

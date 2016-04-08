@@ -494,6 +494,26 @@ namespace com.houseelectrics.serializer.test
 
       }
 
+      public class TypeInferenceTest
+        {
+            public class TypeInferenceTestSub
+            {
+                public string Name { get; set; }
+            }
+            public List<TypeInferenceTestSub> Items { get; set; } 
+            public TypeInferenceTest(){Items = new List<TypeInferenceTestSub>();}
+        }
+
+
+      [Test]
+      public void testTypeInference()
+        {
+            //""Name"":""itema""
+            String strJson = @"{ ""Items"":[{""Name"":""itema""}] }";
+            Json2Object j2o = new Json2Object();
+            TypeInferenceTest result = (TypeInferenceTest) j2o.toObject(strJson, typeof(TypeInferenceTest));
+            Assert.AreEqual(result.Items[0].Name, "itema");
+        }
 
     }
 }

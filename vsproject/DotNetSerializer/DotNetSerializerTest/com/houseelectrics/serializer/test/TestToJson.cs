@@ -549,6 +549,36 @@ namespace com.houseelectrics.serializer.test
             valueSet.expressions2ExpectedValue["stringValuesArr[2].aReallyReallyReallyLongName"] = md.stringValuesArr[2].aReallyReallyReallyLongName;
             Dictionary<string, object> values = util.extractValuesFromJson(valueSet, GetType().Name + "." + "demoDefaultingForUserguide");
         }
+
+
+        public enum MoralPosition
+            {
+            Right, Wrong, GreyArea
+            }
+
+        public class EnumTestStructure
+        {
+            public MoralPosition killing = MoralPosition.Wrong;
+            public MoralPosition modernJazz = MoralPosition.GreyArea;
+            public MoralPosition BeingNice { get; set; }
+            public EnumTestStructure() { BeingNice = MoralPosition.Right; }
+        }
+
+        [Test]
+        public void testEnumWrite()
+        {
+            Object2Json o2j = new Object2Json();
+            o2j.NodeExpander = new FieldReflectionNodeExpander();
+            string strJson = o2j.toJson(new EnumTestStructure());
+            Assert.IsTrue(strJson.Contains("Wrong"));
+            Assert.IsTrue(strJson.Contains("GreyArea"));
+            o2j.NodeExpander = new PropertyReflectionNodeExpander();
+            strJson = o2j.toJson(new EnumTestStructure());
+            Assert.IsTrue(strJson.Contains("Right"));
+        }
+
+
     }
+
 
 }

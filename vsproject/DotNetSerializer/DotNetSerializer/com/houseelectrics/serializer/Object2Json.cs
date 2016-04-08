@@ -16,7 +16,7 @@ namespace com.houseelectrics.serializer
 {
     public class Object2Json
     {
-        private bool alwaysDoubleQuotePropertyNames = false;
+        private bool alwaysDoubleQuotePropertyNames = true;
         public bool AlwaysDoubleQuotePropertyNames
            {
               get { return alwaysDoubleQuotePropertyNames; }
@@ -219,12 +219,16 @@ namespace com.houseelectrics.serializer
             explorerImpl.explore(o, down, up, leaf);
         }
 
-        int  writeTypeAliasProperty(TextWriter writer, Object to, TypeAliaser typeAliaser, int currentFramePropertyCount)
+/**        Need to take note of AlwaysDoubleQuotePropertyNames when writing property type
+Always escape property name with double quotes
+**/
+ int writeTypeAliasProperty(TextWriter writer, Object to, TypeAliaser typeAliaser, int currentFramePropertyCount)
         {
             if (typeAliaser != null)
             {
                 if (currentFramePropertyCount > 0) writer.Write(',');
-                writer.Write(this.TypeAliasProperty + ":'" + typeAliaser(to.GetType()) + "'");
+                string strAliasPropertyWrapper = AlwaysDoubleQuotePropertyNames ? "\"" : "";
+                writer.Write(strAliasPropertyWrapper + this.TypeAliasProperty + strAliasPropertyWrapper + ":\"" + typeAliaser(to.GetType()) + "\"");
                 return 1;
             }
             else
@@ -232,6 +236,7 @@ namespace com.houseelectrics.serializer
                 return 0;
             }
         }
+
 
         public Func<object, string, object, LeafDefaultSet, bool> isDefaultLeafValue = isDefaultLeafValueDefault;
 
@@ -323,6 +328,10 @@ namespace com.houseelectrics.serializer
             else if (to.GetType() == typeof(Single))
             {
                 writer.Write((Single)to);
+            }
+            else if (to.GetType() == typeof(Decimal))
+            {
+                writer.Write((Decimal)to);
             }
             else if (to.GetType() == typeof(Boolean))
             {

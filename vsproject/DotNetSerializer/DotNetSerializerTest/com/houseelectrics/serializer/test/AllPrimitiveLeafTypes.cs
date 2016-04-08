@@ -10,6 +10,7 @@ namespace com.houseelectrics.serializer.test
     {
         public AllPrimitiveLeafTypes()
         {
+            ADecimal = 123.45M;
             ALong = 123;
             ALongRef = 234;
             AShort = 124;
@@ -20,6 +21,7 @@ namespace com.houseelectrics.serializer.test
             AUint64 = 6464;
         }
 
+        public decimal aDecimal = 123.45M;
         public long aLong = 123;
         public short aShort = 124;
         public long? aLongRef = 456;
@@ -29,7 +31,7 @@ namespace com.houseelectrics.serializer.test
         public UInt32 aUint32 = 3232;
         public UInt64 aUint64 = 6464;
 
-
+        public decimal ADecimal { get; set; }
         public long ALong { get; set; }
         public short AShort { get; set; }
         public long ALongRef { get; set; }
@@ -41,17 +43,16 @@ namespace com.houseelectrics.serializer.test
         public UInt32 AUint32 { get; set; }
         public UInt64 AUint64 { get; set; }
 
-        public static String[] testFieldExpressions = { "aLong", "aShort", "aLongRef", "aString", "aChar", "aString2", "aUint32", "aUint64" };
+        public static String[] testFieldExpressions = { "aDecimal", "aLong", "aShort", "aLongRef", "aString", "aChar", "aString2", "aUint32", "aUint64" };
         public static Object[] testExpectedFieldValues(AllPrimitiveLeafTypes template)
         {
-            return new Object[] { template.aLong, template.aShort, template.aLongRef, template.aString, template.aChar.ToString(), template.aString2, template.aUint32, template.aUint64 };
+            return new Object[] {template.aDecimal, template.aLong, template.aShort, template.aLongRef, template.aString, template.aChar.ToString(), template.aString2, template.aUint32, template.aUint64 };
         }
-        public static String[] testPropertyExpressions = { "ALong", "AShort", "ALongRef", "ALongRefNullable", "AString", "AChar", "AString2", "AUint32", "AUint64" };
+        public static String[] testPropertyExpressions = {"ADecimal",  "ALong", "AShort", "ALongRef", "ALongRefNullable", "AString", "AChar", "AString2", "AUint32", "AUint64" };
         public static Object[] testExpectedPropertyValues(AllPrimitiveLeafTypes template)
         {
-            return new Object[] { template.ALong, template.AShort, template.ALongRef, template.ALongRefNullable, template.AString, template.AChar/*.ToString()*/, template.AString2, template.AUint32, template.AUint64 };
+            return new Object[] {template.ADecimal, template.ALong, template.AShort, template.ALongRef, template.ALongRefNullable, template.AString, template.AChar/*.ToString()*/, template.AString2, template.AUint32, template.AUint64 };
         }
-
 
     }
 }

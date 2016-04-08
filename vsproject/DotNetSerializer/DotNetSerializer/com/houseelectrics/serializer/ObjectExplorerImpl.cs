@@ -108,6 +108,7 @@ namespace com.houseelectrics.serializer
         private bool isLeaf(Object o, Type theclass)
         {
             if (o == null) { return true; }
+            if (theclass == typeof(decimal) || theclass == typeof(Decimal)) return true;
             if (theclass.IsPrimitive) return true;
             if (theclass==typeof (String)) return true;
             return false;

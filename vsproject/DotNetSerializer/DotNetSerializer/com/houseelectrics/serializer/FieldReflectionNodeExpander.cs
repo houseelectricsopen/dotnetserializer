@@ -33,7 +33,11 @@ namespace com.houseelectrics.serializer
                 {
                     continue;
                 }
-                Object value = fi.GetValue(o);
+                Object value = fi.GetValue(o);                
+                if (fi.FieldType.IsEnum)
+                {
+                    value = Enum.GetName(fi.FieldType, value);
+                }
 
                 listener(o, fi.Name, value);
             }

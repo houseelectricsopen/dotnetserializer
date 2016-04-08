@@ -401,34 +401,90 @@ namespace com.houseelectrics.serializer
 
         }
 
+        Type inferCurrentTypeFromStack(bool autocreate)
+        {
+            if (this.objects.Count == 0)
+            {
+                return null;
+            }
+            Type currentType = null;
+            Type parentType = null;
+            for (int done = (this.objects.Count - 1); done >= 0; done--)
+            {
+                parentType = currentType;
+                currentType = null;
+                ObjectFrame oFrame = this.objects.ElementAt(done) as ObjectFrame;
+                ArrayFrame aFrame = this.objects.ElementAt(done) as ArrayFrame;
+                string propertyName = null;
+                if (oFrame != null)
+                {
+                    currentType = oFrame.theObject != null ? oFrame.theObject.GetType() : null;
+                    propertyName = oFrame.propertyName;
+                }
+                if (aFrame != null)
+                {
+                    propertyName = aFrame.propertyName;
+                }
+
+                if (currentType == null && parentType != null)
+                {
+                    //infer from the parentType and propertyName
+                    if (propertyName != null)
+                    {
+                        PropertyInfo pi = parentType.GetProperty(propertyName);
+                        if (pi != null)
+                        {
+                            currentType = pi.PropertyType;
+                        }
+                    }
+                    else if (parentType.IsGenericType)
+                    {
+                        Type[] gtypes = parentType.GetGenericArguments();
+                        if (gtypes != null && gtypes.Length == 1)
+                        {
+                            currentType = gtypes[0];
+                        }
+                    }
+                }
+                if (autocreate && currentType != null && oFrame != null && oFrame.theObject == null)
+                {
+                    oFrame.theObject = newInstance(currentType);
+                }
+
+            }
+            return currentType;
+        }
+
+
         public void JsonLeaf(string propertyName, string value, bool isQuoted)
         {
             if (objectTypePending)
             {
-                if (!propertyName.Equals(TypeSpecifier))
+                bool isTypeSpecifierLeaf = false;
+                Type attributeTypeHint = null;
+                if (propertyName.Equals(TypeSpecifier))
                 {
-                    string message = String.Format("encountered a property in subobject \"{0}\" at but dont know parent object type yet ! json=={1}", propertyName, json);
-                    NoClueForTypeException ex = new NoClueForTypeException(message);
-                    throw ex;
+                    attributeTypeHint = TypeAntiAliaser(value);
+                    isTypeSpecifierLeaf = true;
                 }
                 else
                 {
-                    Type attributeTypeHint = TypeAntiAliaser(value);
-
-                    if (attributeTypeHint == null)
-                    {
-                        string message = String.Format("cant load type: \"{0}\" in json:{1}", value, json);
-                        NoClueForTypeException ex = new NoClueForTypeException(message);
-                        throw ex;
-                    }
-
-                    object newObject =  newInstance(attributeTypeHint);
-                    ObjectFrame objectHolder = (ObjectFrame)objects.Peek();
-                    objectHolder.theObject = newObject;
-                    listener.onCreateObject(newObject);
-                    objectTypePending = false;
-                    return;
+                    attributeTypeHint = inferCurrentTypeFromStack(false);
                 }
+
+                if (attributeTypeHint == null)
+                {
+                    string message = String.Format("cant load type: \"{0}\" in json:{1}", value, json);
+                    NoClueForTypeException ex = new NoClueForTypeException(message);
+                    throw ex;
+                }
+
+                object newObject = newInstance(attributeTypeHint);
+                ObjectFrame objectHolder = (ObjectFrame)objects.Peek();
+                objectHolder.theObject = newObject;
+                listener.onCreateObject(newObject);
+                objectTypePending = false;
+                if (isTypeSpecifierLeaf) return;
             }
 
             if (objectTypePending || objects.Count == 0)
@@ -455,8 +511,22 @@ namespace com.houseelectrics.serializer
         {
             if (objectTypePending)
             {
-                string strMessage = String.Format("unable to determine type of object terminated at pos {0} in {1}", pos, json);
-                throw new NoClueForTypeException(strMessage);
+                if (objects.Count() > 0)
+                {
+                    ObjectFrame currentFrame = objects.Peek() as ObjectFrame;
+                    if (currentFrame != null && currentFrame.theObject == null)
+                    {
+                        //fix parent chain
+                        Type inferredType = inferCurrentTypeFromStack(true);
+                        if (inferredType!=null) objectTypePending = false;
+                    }
+                }
+
+                if (objectTypePending)
+                {
+                    string strMessage = String.Format("unable to determine type of object terminated at pos {0} in {1}", pos, json);
+                    throw new NoClueForTypeException(strMessage);
+                }
             }
             if (objects.Count < 1)
             {
@@ -471,8 +541,9 @@ namespace com.houseelectrics.serializer
                 }
             listener.onEndObject(lastFrame.theObject);
             if (objects.Count() > 0)
+            {
                 objects.Peek().submitObjectToStack(((ObjectFrame)lastObject).propertyName, ((ObjectFrame)lastObject).theObject, setValueinObject, listener);
-
+            }
         }
 
         public void JsonStartFunction(string functionName, int pos, string propertyName)
